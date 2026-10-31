@@ -22,7 +22,7 @@ echo
 echo "# children of php-fpm/httpd that look like shells or downloaders"
 mapfile -t parents < <(ps -eo pid=,cmd= | awk '/php-fpm: pool|apache2|httpd|php-cgi/ {print $1}')
 if ((${#parents[@]}==0)); then
-  echo "(no php/httpd parents — skip child shell check)"
+  echo "(no php/httpd parents - skip child shell check)"
 else
   found=0
   while read -r pid ppid user cmd; do
@@ -57,4 +57,4 @@ echo
 echo "# mitigation file in lab"
 cat conf/php.ini-mitigation.conf
 echo
-echo "hunt done — if ALERT lines or unexpected webroot files: image before clean."
+echo "hunt done - if ALERT lines or unexpected webroot files: image before clean."
