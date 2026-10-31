@@ -21,7 +21,7 @@
 ## 2. Advisory tracker
 
 - **CVE-2026-109618, CVE-2026-109619** — critical memory-safety bugs in the PHP engine, collectively tracked as "php2shell". Under triage here.
-- **115560** — informational only; not in scope for this note.
+- **CVE-2026-115560** — related, out of scope for this note (informational only).
 
 [CISA alert, 2026-10-21](https://www.cisa.gov/news-events/alerts/2026/10/21/critical-vulnerabilities-php-require-immediate-patching) urges immediate upgrade to the fixed branches below and points defenders to detection content in CISA's public SIGMA repository. The [Qualys write-up](https://blog.qualys.com/vulnerabilities-threat-research/2026/10/20/php-announces-critical-security-release-for-two-vulnerabilities) describes the issue as reachable over normal web requests on unpatched workers, which is why process ancestry and webroot integrity are the main hunt signals. See also [php.net releases](https://www.php.net/releases/).
 
@@ -47,6 +47,8 @@ session.upload_progress.enabled = Off
 $ php -c conf/php.ini-mitigation.conf -i | grep upload_progress.enabled
 session.upload_progress.enabled => Off => Off
 ```
+
+> **Partial interim mitigation only.** `session.upload_progress.enabled = Off` is just one of the interim controls — it is **not** the full set. PHP and Qualys also discuss other interim controls (e.g. `memory_limit` tuning related to CVE-2026-109618). Operators should follow the full vendor (PHP) and CISA guidance, and treat upgrading to a fixed build as the only real fix.
 
 Result: lab runtime is 8.4.27 (at the patched floor) and the mitigation directive loads. In production, put it in the FPM pool / Apache ini and **restart every worker**.
 
@@ -157,7 +159,7 @@ Expect false positives from legitimate `exec()`/`shell_exec()` in apps (image co
 
 1. Inventory every PHP install (CLI, FPM, Apache, containers); note branch and package source.
 2. Upgrade to the fixed version or confirm vendor backport by advisory ID.
-3. Until patched: `session.upload_progress.enabled = Off`, restart workers.
+3. Until patched: `session.upload_progress.enabled = Off` (partial — apply the full PHP/CISA interim guidance too), restart workers.
 4. Verify running workers' start time is after the upgrade (`ps -o lstart= -p <pid>`).
 5. Run the hunt commands; diff webroot hashes against baseline.
 6. Turn on auditd/Sigma rule; review hits after 24h.
