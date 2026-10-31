@@ -1,0 +1,26 @@
+# Version / package
+php -v
+readlink -f $(which php)
+# Distro packages often keep older NVR with security backport — check changelog/advisory ID too.
+
+# Mitigation (restart every worker after)
+# php.ini / pool.d: session.upload_progress.enabled=0
+
+# Process ancestry: php-fpm/httpd spawning a shell
+ps -eo pid,ppid,user,cmd | grep -E 'php-fpm|apache2|httpd'
+# auditd (persist):
+# -a always,exit -F arch=b64 -S execve -F path=/usr/bin/bash -F key=php_shell
+# -a always,exit -F arch=b64 -S execve -F path=/bin/sh -F key=php_shell
+# Then correlate ausearch -k php_shell with parent cmdline containing php-fpm|httpd.
+
+# Webroot integrity
+find /var/www -type f -mtime -7 -ls
+find /var/www -type f -name '*.php' -newer /var/tmp/baseline.stamp -print
+
+# Access log: long multipart POSTs around disclosure window
+# zgrep -E 'POST.*(php|index)' /var/log/nginx/access.log* | awk '$10+0>1000000 || $NF ~ /multipart/'
+
+# Core / crash (defensive preservation — do not reproduce the bug to obtain a core)
+# coredumpctl list | grep -i php
+# If a worker already crashed: preserve the core, note maps/auxv, correlate request ID / timestamp
+# with access logs. Goal is attribution and scope, not weaponizing UAF.
